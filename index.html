@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">AeroSpray // SPS30 Smart Controller</title>
+    <!-- Google Fonts for English/French (Outfit) and Arabic (Tajawal) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <!-- Premium Flat CSS stylesheet -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js for gorgeous analytics tracking -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+</head>
+<body class="dark-theme">
+
+    <div class="glass-background"></div>
+
+    <!-- MAIN CONTAINER -->
+    <div class="dashboard-wrapper">
+        
+        <!-- HEADER -->
+        <header class="app-header">
+            <div class="brand-section">
+                <div class="logo-container">
+                    <svg viewBox="0 0 100 100" class="app-logo">
+                        <circle cx="50" cy="50" r="45" stroke="url(#logoGlow)" stroke-width="3" fill="none" />
+                        <path d="M35 50 Q50 35 65 50 T95 50" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" fill="none" />
+                        <circle cx="50" cy="50" r="10" fill="#00e5ff" class="pulse-core" />
+                        <defs>
+                            <linearGradient id="logoGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#00ff87" />
+                                <stop offset="100%" stop-color="#60efff" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+                <div class="brand-text">
+                    <h1 data-i18n="brand_title">AeroSpray</h1>
+                    <span class="sub-brand" data-i18n="brand_subtitle">SPS30 Air Misting Controller</span>
+                </div>
+            </div>
+
+            <!-- HARDWARE STATUS BAR -->
+            <div class="status-bar">
+                <div class="status-indicator disconnected" id="connection-indicator">
+                    <span class="status-pulse"></span>
+                    <span class="status-text" id="status-label" data-i18n="status_simulated">Offline (Simulation)</span>
+                </div>
+            </div>
+
+            <!-- CONTROLS & LANG SELECTOR -->
+            <div class="header-actions">
+                <button class="action-btn text-btn" id="toggle-config-btn" title="Settings">
+                    <svg class="icon-svg" viewBox="0 0 24 24">
+                        <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="fr">FR</button>
+                    <button class="lang-btn" data-lang="ar">العربية</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT GRID -->
+        <main class="dashboard-grid">
+
+            <!-- COLUMN 1: AQI & SPRAY CONTROLS -->
+            <section class="grid-card aqi-spray-panel borderless-card">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <h2 data-i18n="air_quality_title">Air Quality Index</h2>
+                    <span class="pulse-indicator good" id="aqi-pulse"></span>
+                </div>
+                
+                <!-- Circular AQI Gauge -->
+                <div class="aqi-gauge-container">
+                    <div class="aqi-gauge">
+                        <svg viewBox="0 0 100 100" class="gauge-ring">
+                            <circle cx="50" cy="50" r="42" stroke="rgba(255,255,255,0.05)" stroke-width="6" fill="none" />
+                            <circle cx="50" cy="50" r="42" stroke="url(#aqiGradient)" stroke-width="7" stroke-linecap="round" fill="none" stroke-dasharray="264" stroke-dashoffset="50" id="aqi-progress" />
+                            <defs>
+                                <linearGradient id="aqiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stop-color="#00ff87" />
+                                    <stop offset="60%" stop-color="#60efff" />
+                                    <stop offset="100%" stop-color="#0083ff" />
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="aqi-value-box">
+                            <span class="aqi-number" id="aqi-value">22</span>
+                            <span class="aqi-label good" id="aqi-status-text" data-i18n="aqi_excellent">Excellent</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RELAY & WATER MOTOR STATE -->
+                <div class="relay-state-card">
+                    <div class="relay-title" data-i18n="relay_status">Relay State</div>
+                    <div class="relay-status-display active" id="motor-status-container">
+                        <!-- Animating spray fan / mist -->
+                        <div class="motor-visualization">
+                            <div class="spray-nozzle"></div>
+                            <div class="motor-fan" id="motor-fan-visual">
+                                <svg viewBox="0 0 24 24" class="fan-icon">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.65 14.86c-.57.85-1.07 1.48-1.65 2.14v-4.7c1.3.4 1.7 1.5 1.65 2.56zm.2-6.52c.65.65.65 1.71 0 2.36-.65.65-1.71.65-2.36 0v-4.7c.95-.01 1.71.35 2.36 2.34zm-7.22.42c.85-.57 1.48-1.07 2.14-1.65h-4.7c.4 1.3 1.5 1.7 2.56 1.65zm2.84 3.7c-.65.65-1.71.65-2.36 0-.65-.65-.65-1.71 0-2.36h4.7c-.01.95.35 1.71 2.36 2.36zm4.18-1.6h4.7c-.4-1.3-1.5-1.7-2.56-1.65-.57.85-1.07 1.48-2.14 1.65zm.36-4.71v4.7c-1.3-.4-1.7-1.5-1.65-2.56-.57-.85-1.07-1.48-1.65-2.14zm4.01-.29c.65-.65.65-1.71 0-2.36-.65-.65-1.71-.65-2.36 0v4.7c.95.01 1.71-.35 2.36-2.34zm-5.61-4.14v4.7c-1.3.4-1.7 1.5-1.65 2.56v-4.7c-.57-.85-1.07-1.48-1.65-2.14z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="mist-droplets" id="mist-particles">
+                                <span class="drop"></span>
+                                <span class="drop"></span>
+                                <span class="drop"></span>
+                                <span class="drop"></span>
+                                <span class="drop"></span>
+                            </div>
+                        </div>
+                        <div class="relay-text-status" id="relay-state-label" data-i18n="relay_active">Active (Spraying)</div>
+                    </div>
+                </div>
+
+                <!-- OPERATION CONTROLS -->
+                <div class="control-panel">
+                    <div class="control-title" data-i18n="operation_mode">Operation Mode</div>
+                    <div class="toggle-mode-wrapper">
+                        <button class="mode-btn active" id="mode-auto" data-mode="auto" data-i18n="mode_auto">Automatic</button>
+                        <button class="mode-btn" id="mode-manual" data-mode="manual" data-i18n="mode_manual">Manual</button>
+                    </div>
+
+                    <button class="action-btn spray-trigger-btn disabled" id="manual-spray-btn" data-i18n="btn_manual_spray_on">
+                        Start Spraying
+                    </button>
+                </div>
+            </section>
+
+            <!-- COLUMN 2: FULL SPS30 SENSOR DATA -->
+            <section class="grid-card data-panel borderless-card">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <h2 data-i18n="sensor_readings">SPS30 Particulate Matter</h2>
+                    <span class="live-tag" data-i18n="live_badge">LIVE</span>
+                </div>
+
+                <!-- Grid inside the card -->
+                <div class="sps30-grid">
+                    
+                    <!-- Mass Concentration -->
+                    <div class="readout-category-header">
+                        <svg class="category-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.04-.42 1.99-1.07 2.75z" fill="currentColor"/></svg>
+                        <span data-i18n="pm_mass_title">Mass Concentration (µg/m³)</span>
+                    </div>
+
+                    <div class="readout-cards-container">
+                        <!-- PM1.0 -->
+                        <div class="readout-card">
+                            <span class="readout-title">PM1.0</span>
+                            <span class="readout-value" id="pm1-mass">5.4</span>
+                            <span class="readout-desc" data-i18n="ultrafine">Ultrafine Dust</span>
+                        </div>
+                        <!-- PM2.5 -->
+                        <div class="readout-card highlight-card">
+                            <span class="readout-title">PM2.5</span>
+                            <span class="readout-value" id="pm25-mass">12.8</span>
+                            <span class="readout-desc" data-i18n="fine">Fine Dust (Target)</span>
+                        </div>
+                        <!-- PM4.0 -->
+                        <div class="readout-card">
+                            <span class="readout-title">PM4.0</span>
+                            <span class="readout-value" id="pm4-mass">16.2</span>
+                            <span class="readout-desc" data-i18n="environmental">Environmental Dust</span>
+                        </div>
+                        <!-- PM10.0 -->
+                        <div class="readout-card">
+                            <span class="readout-title">PM10</span>
+                            <span class="readout-value" id="pm10-mass">22.4</span>
+                            <span class="readout-desc" data-i18n="coarse">Coarse Dust</span>
+                        </div>
+                    </div>
+
+                    <!-- Number Concentration -->
+                    <div class="readout-category-header">
+                        <svg class="category-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.53c-.26-.81-1-1.4-1.9-1.4h-1v-3c0-.55-.45-1-1-1h-6v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" fill="currentColor"/></svg>
+                        <span data-i18n="pm_number_title">Number Concentration (particles/cm³)</span>
+                    </div>
+
+                    <div class="number-cards-grid">
+                        <div class="num-card"><span class="num-title">PM0.5</span><span class="num-val" id="pm05-num">142</span></div>
+                        <div class="num-card"><span class="num-title">PM1.0</span><span class="num-val" id="pm1-num">245</span></div>
+                        <div class="num-card"><span class="num-title">PM2.5</span><span class="num-val" id="pm25-num">48</span></div>
+                        <div class="num-card"><span class="num-title">PM4.0</span><span class="num-val" id="pm4-num">12</span></div>
+                        <div class="num-card"><span class="num-title">PM10</span><span class="num-val" id="pm10-num">4</span></div>
+                    </div>
+
+                    <!-- Miscellaneous metrics -->
+                    <div class="misc-metrics-container">
+                        <div class="misc-card">
+                            <span class="misc-title" data-i18n="typical_particle_size">Typical Particle Size</span>
+                            <span class="misc-value"><span id="typical-size">0.42</span> <span class="unit">µm</span></span>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- COLUMN 3: SETTINGS & CONTROLS -->
+            <section class="grid-card settings-panel borderless-card">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <h2 data-i18n="system_settings">System Settings</h2>
+                </div>
+
+                <div class="settings-form">
+                    
+                    <!-- THRESHOLD SLIDER -->
+                    <div class="settings-group">
+                        <div class="settings-label-row">
+                            <label for="pm25-threshold" data-i18n="label_pm25_threshold">PM2.5 Trigger Threshold</label>
+                            <span class="settings-val-badge"><span id="threshold-val">35</span> µg/m³</span>
+                        </div>
+                        <input type="range" class="range-slider" id="pm25-threshold" min="5" max="150" value="35">
+                        <span class="range-hint" data-i18n="pm25_threshold_hint">Relay switches ON when PM2.5 exceeds this value.</span>
+                    </div>
+
+                    <!-- DURATION SLIDER -->
+                    <div class="settings-group">
+                        <div class="settings-label-row">
+                            <label for="spray-duration" data-i18n="label_spray_duration">Misting Duration</label>
+                            <span class="settings-val-badge"><span id="duration-val">10</span> s</span>
+                        </div>
+                        <input type="range" class="range-slider" id="spray-duration" min="5" max="60" value="10">
+                        <span class="range-hint" data-i18n="spray_duration_hint">Time the water spray runs per automated trigger.</span>
+                    </div>
+
+                    <!-- ESP32 DEVICE NETWORK SETUP -->
+                    <div class="settings-group network-setup">
+                        <h3 data-i18n="device_network">ESP32 Hardware Connection</h3>
+                        
+                        <div class="input-row">
+                            <label for="esp32-ip" data-i18n="esp32_ip">WebSocket Target Address</label>
+                            <input type="text" class="text-input" id="esp32-ip" placeholder="192.168.1.100" value="192.168.1.100">
+                        </div>
+
+                        <div class="network-actions">
+                            <button class="action-btn connect-btn" id="connect-hardware-btn" data-i18n="btn_connect">Connect</button>
+                            <button class="action-btn secondary-btn" id="toggle-simulator-btn" data-i18n="btn_toggle_sim">Active Simulator</button>
+                        </div>
+                    </div>
+
+                    <!-- FIRMWARE HELPER -->
+                    <div class="firmware-help-box">
+                        <div class="help-content">
+                            <h4 data-i18n="firmware_title">Physical Wiring & Code</h4>
+                            <p data-i18n="firmware_desc">Ready to program your ESP32? Get the fully loaded sketch containing libraries, Pin mappings, and WebSocket handlers.</p>
+                            <button class="firmware-btn" id="show-firmware-btn" data-i18n="btn_firmware">View ESP32 Code</button>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- FULL ROW 4: HISTORY ANALYTICS & LOGS -->
+            <section class="grid-card history-panel borderless-card">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <h2 data-i18n="analytics_title">Real-Time Air Quality History</h2>
+                    <div class="chart-legend">
+                        <span class="legend-item"><span class="legend-color pm1-color"></span>PM1.0</span>
+                        <span class="legend-item"><span class="legend-color pm25-color"></span>PM2.5</span>
+                        <span class="legend-item"><span class="legend-color pm10-color"></span>PM10</span>
+                        <span class="legend-item"><span class="legend-color spray-color"></span><span data-i18n="spray_legend">Water Spray</span></span>
+                    </div>
+                </div>
+
+                <div class="analytics-layout">
+                    <!-- Chart canvas wrapper -->
+                    <div class="chart-canvas-container">
+                        <canvas id="air-history-chart"></canvas>
+                    </div>
+
+                    <!-- System Event logs -->
+                    <div class="event-logs-container">
+                        <div class="logs-header">
+                            <h3 data-i18n="system_logs">System Event Logs</h3>
+                            <button class="clear-logs-btn" id="clear-logs-btn" data-i18n="btn_clear_logs">Clear</button>
+                        </div>
+                        <div class="logs-list" id="system-logs-list">
+                            <!-- Populated dynamically -->
+                            <div class="log-row info"><span class="log-time">15:59:29</span> <span class="log-message">AeroSpray System Initialized. Simulator active.</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- CODE DIALOG overlay (FIRMWARE VIEW) -->
+    <dialog class="code-dialog" id="firmware-dialog">
+        <div class="dialog-wrapper glass-card">
+            <div class="dialog-header">
+                <h3 data-i18n="dialog_firmware_title">ESP32 + SPS30 Arduino Code</h3>
+                <button class="close-dialog-btn" id="close-dialog-btn">&times;</button>
+            </div>
+            <div class="dialog-body">
+                <p data-i18n="dialog_firmware_desc">Flash this C++ sketch to your ESP32. Set your SSID and Password. It connects to the Sensirion SPS30 over I2C and publishes real-time data to your dashboard.</p>
+                <div class="code-container">
+                    <pre><code class="cpp-code" id="cpp-code-block">Loading code...</code></pre>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="action-btn copy-btn" id="copy-code-btn" data-i18n="btn_copy_code">Copy Code</button>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- Connective Script file -->
+    <script src="app.js"></script>
+</body>
+</html>
