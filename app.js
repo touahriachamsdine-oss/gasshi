@@ -250,6 +250,7 @@ const arduinoCode = `/*
 
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WiFiClientSecure.h>
 #include <ESPAsyncWebServer.h>
 #include <Wire.h>
 #include <SensirionI2cSps30.h>
@@ -541,7 +542,13 @@ void loop() {
     lastDbPostTime = millis();
     if (WiFi.status() == WL_CONNECTED) {
       HTTPClient http;
-      http.begin(dbServerEndpoint);
+      if (String(dbServerEndpoint).startsWith("https")) {
+        WiFiClientSecure client;
+        client.setInsecure();
+        http.begin(client, dbServerEndpoint);
+      } else {
+        http.begin(dbServerEndpoint);
+      }
       http.addHeader("Content-Type", "application/json");
 
       StaticJsonDocument<512> postDoc;
