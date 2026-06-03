@@ -93,12 +93,12 @@ app.get('/api/readings', async (req, res) => {
   }
 });
 
-// Serve static assets from the parent/root directory
-app.use(express.static(path.join(__dirname)));
+// Serve static assets from the public directory
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Fallback to serving index.html for undefined routes
 app.get('/*splat', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 if (require.main === module) {
