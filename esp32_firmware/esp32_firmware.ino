@@ -21,6 +21,15 @@
   ========================================================================
 */
 
+// Forward struct declaration — MUST be before #includes so Arduino's
+// auto-generated function prototypes (inserted after the last #include)
+// can reference this type.
+struct UserJWT {
+    String username;
+    String role;
+    bool isValid;
+};
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
@@ -32,7 +41,6 @@
 #include <LittleFS.h>
 #include <mbedtls/md.h>
 #include <mbedtls/base64.h>
-#include "types.h"
 
 // WiFi Settings - Modify with your local network details
 const char* ssid = "OnePlus 7T-5acc";
