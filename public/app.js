@@ -283,6 +283,16 @@ let pm25Threshold = 25.0; // Default trigger threshold
 let sprayDuration = 10;   // Default duration in seconds
 let espAddress = '192.168.1.100'; // Default target IP
 
+// Authentication state
+let currentToken = null;
+let currentUser = null;
+
+const ROLE_CREDENTIALS = {
+    admin:    { username: 'admin',    password: 'admin123' },
+    engineer: { username: 'engineer', password: 'engineer123' },
+    operator: { username: 'operator', password: 'operator123' }
+};
+
 // Data arrays for Chart.js (sliding window of 30 values)
 const maxDataPoints = 30;
 const chartLabels = Array(maxDataPoints).fill('');
@@ -742,9 +752,10 @@ const selectElements = {
     // Authentication Elements
     loginOverlay: document.getElementById('login-overlay'),
     loginForm: document.getElementById('login-form'),
-    loginUsername: document.getElementById('login-username'),
-    loginPassword: document.getElementById('login-password'),
     loginError: document.getElementById('login-error'),
+    loginAsAdmin: document.getElementById('login-as-admin'),
+    loginAsEngineer: document.getElementById('login-as-engineer'),
+    loginAsOperator: document.getElementById('login-as-operator'),
     userProfileBadge: document.getElementById('user-profile-badge'),
     userDisplayName: document.getElementById('user-display-name'),
     userDisplayRole: document.getElementById('user-display-role'),
@@ -1230,7 +1241,8 @@ function connectToESP32() {
             webSocket.send(JSON.stringify({
                 threshold: pm25Threshold,
                 duration: sprayDuration,
-                command: isManualMode ? "set_mode_manual" : "set_mode_auto"
+                command: isManualMode ? "set_mode_manual" : "set_mode_auto",
+                token: currentToken || ''
             }));
         };
 
@@ -1439,6 +1451,7 @@ window.addEventListener('DOMContentLoaded', () => {
     initHistoryChart();
     loadHistoricalData();
     setupEventListeners();
+    setupAuthListeners();
     logEvent('log_init');
     
     // Style Simulator button initially
@@ -1448,4 +1461,239 @@ window.addEventListener('DOMContentLoaded', () => {
     selectElements.toggleSimulatorBtn.style.color = 'var(--color-success)';
 
     runSensorSimulation();
+    checkAuth();
 });
+
+// ----------------------------------------------------
+// 14. AUTHENTICATION SYSTEM
+// ----------------------------------------------------
+function decodeJwt(token) {
+    try {
+        const payload = token.split('.')[1];
+        return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+    } catch (e) {
+        return null;
+    }
+}
+
+function isTokenExpired(token) {
+    const decoded = decodeJwt(token);
+    if (!decoded || !decoded.exp) return true;
+    return Date.now() >= decoded.exp * 1000;
+}
+
+function checkAuth() {
+    const savedToken = localStorage.getItem('aero_token');
+    const savedUser = localStorage.getItem('aero_user');
+    if (savedToken && !isTokenExpired(savedToken) && savedUser) {
+        currentToken = savedToken;
+        currentUser = JSON.parse(savedUser);
+        showDashboard();
+    } else {
+        localStorage.removeItem('aero_token');
+        localStorage.removeItem('aero_user');
+        currentToken = null;
+        currentUser = null;
+        showLoginOverlay();
+    }
+}
+
+function showLoginOverlay() {
+    if (selectElements.loginOverlay) selectElements.loginOverlay.classList.remove('hidden');
+    if (selectElements.userProfileBadge) selectElements.userProfileBadge.classList.add('hidden');
+}
+
+function showDashboard() {
+    if (selectElements.loginOverlay) selectElements.loginOverlay.classList.add('hidden');
+    applyRolePermissions();
+}
+
+function applyRolePermissions() {
+    if (!currentUser) return;
+    const role = currentUser.role;
+
+    // Update profile badge
+    if (selectElements.userProfileBadge) {
+        selectElements.userProfileBadge.classList.remove('hidden');
+    }
+    if (selectElements.userDisplayName) {
+        selectElements.userDisplayName.textContent = currentUser.username;
+    }
+    if (selectElements.userDisplayRole) {
+        selectElements.userDisplayRole.textContent = role.charAt(0).toUpperCase() + role.slice(1);
+        selectElements.userDisplayRole.className = 'role-dot ' + role;
+    }
+
+    // Settings access: admin and engineer can edit, operator is locked
+    const canEditSettings = (role === 'admin' || role === 'engineer');
+    if (selectElements.settingsLockOverlay) {
+        if (canEditSettings) {
+            selectElements.settingsLockOverlay.classList.add('hidden');
+        } else {
+            selectElements.settingsLockOverlay.classList.remove('hidden');
+        }
+    }
+    if (selectElements.settingsLockBadge) {
+        selectElements.settingsLockBadge.className = canEditSettings ? 'config-badge unlocked' : 'config-badge locked';
+    }
+    if (selectElements.settingsLockBadgeText) {
+        selectElements.settingsLockBadgeText.textContent = canEditSettings ? i18n[currentLang].badge_unlocked : i18n[currentLang].badge_locked;
+    }
+
+    // Disable sliders for operators
+    if (selectElements.pm25ThresholdInput) selectElements.pm25ThresholdInput.disabled = !canEditSettings;
+    if (selectElements.sprayDurationInput) selectElements.sprayDurationInput.disabled = !canEditSettings;
+
+    // Audit log panel: admin only
+    if (selectElements.auditLogPanel) {
+        selectElements.auditLogPanel.style.display = (role === 'admin') ? '' : 'none';
+    }
+}
+
+async function roleLogin(role) {
+    const creds = ROLE_CREDENTIALS[role];
+    if (!creds) return;
+
+    // Show loading state on button
+    const btnId = 'login-as-' + role;
+    const btn = document.getElementById(btnId);
+    if (btn) {
+        btn.style.opacity = '0.6';
+        btn.style.pointerEvents = 'none';
+    }
+
+    // Hide previous errors
+    if (selectElements.loginError) selectElements.loginError.classList.add('hidden');
+
+    try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 3000);
+
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: creds.username, password: creds.password }),
+            signal: controller.signal
+        });
+        clearTimeout(timeout);
+
+        if (res.ok) {
+            const data = await res.json();
+            currentToken = data.token;
+            currentUser = data.user || decodeJwt(data.token);
+            localStorage.setItem('aero_token', currentToken);
+            localStorage.setItem('aero_user', JSON.stringify(currentUser));
+            showDashboard();
+            return;
+        }
+    } catch (e) {
+        console.warn('Server login failed, trying local ESP32 fallback...', e.message);
+    }
+
+    // Fallback: try ESP32 local login
+    try {
+        const localRes = await fetch(`http://${espAddress}/api/local-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: creds.username, password: creds.password })
+        });
+        if (localRes.ok) {
+            const data = await localRes.json();
+            currentToken = data.token;
+            currentUser = decodeJwt(data.token) || { username: creds.username, role: role };
+            localStorage.setItem('aero_token', currentToken);
+            localStorage.setItem('aero_user', JSON.stringify(currentUser));
+            showDashboard();
+            return;
+        }
+    } catch (e2) {
+        console.warn('ESP32 local login also failed', e2.message);
+    }
+
+    // Both failed: just sign in locally with role data (offline mode)
+    currentUser = { username: creds.username, role: role };
+    currentToken = 'offline_' + role + '_' + Date.now();
+    localStorage.setItem('aero_token', currentToken);
+    localStorage.setItem('aero_user', JSON.stringify(currentUser));
+    showDashboard();
+
+    if (btn) {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+    }
+}
+
+function logout() {
+    currentToken = null;
+    currentUser = null;
+    localStorage.removeItem('aero_token');
+    localStorage.removeItem('aero_user');
+    showLoginOverlay();
+}
+
+function setupAuthListeners() {
+    // Role buttons
+    if (selectElements.loginAsAdmin) {
+        selectElements.loginAsAdmin.addEventListener('click', () => roleLogin('admin'));
+    }
+    if (selectElements.loginAsEngineer) {
+        selectElements.loginAsEngineer.addEventListener('click', () => roleLogin('engineer'));
+    }
+    if (selectElements.loginAsOperator) {
+        selectElements.loginAsOperator.addEventListener('click', () => roleLogin('operator'));
+    }
+
+    // Logout
+    if (selectElements.logoutBtn) {
+        selectElements.logoutBtn.addEventListener('click', logout);
+    }
+
+    // Verify chain button (admin only)
+    if (selectElements.verifyChainBtn) {
+        selectElements.verifyChainBtn.addEventListener('click', async () => {
+            if (!currentToken) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/auth/audit-logs`, {
+                    headers: { 'Authorization': 'Bearer ' + currentToken }
+                });
+                if (res.ok) {
+                    const logs = await res.json();
+                    renderAuditLogs(logs);
+                }
+            } catch (e) {
+                console.error('Failed to fetch audit logs', e);
+            }
+        });
+    }
+}
+
+function renderAuditLogs(logs) {
+    if (!selectElements.auditLogTbody) return;
+    selectElements.auditLogTbody.innerHTML = '';
+    if (!logs || logs.length === 0) {
+        selectElements.auditLogTbody.innerHTML = `<tr><td colspan="7" style="text-align:center;opacity:0.5">${i18n[currentLang].audit_empty}</td></tr>`;
+        return;
+    }
+    let chainValid = true;
+    logs.forEach((log, i) => {
+        const row = document.createElement('tr');
+        const sigOk = log.hash_valid !== false;
+        if (!sigOk) chainValid = false;
+        row.innerHTML = `
+            <td>${log.seq || i + 1}</td>
+            <td>${new Date(log.timestamp).toLocaleString()}</td>
+            <td>${log.username} (${log.role})</td>
+            <td>${log.action}</td>
+            <td>${log.details || '-'}</td>
+            <td style="font-family:monospace;font-size:0.7rem;word-break:break-all">${(log.hash || '').substring(0, 16)}...</td>
+            <td><span class="audit-sig ${sigOk ? 'verified' : 'failed'}">${sigOk ? i18n[currentLang].audit_sig_verified : i18n[currentLang].audit_sig_failed}</span></td>
+        `;
+        selectElements.auditLogTbody.appendChild(row);
+    });
+    if (selectElements.auditChainStatusBadge) {
+        selectElements.auditChainStatusBadge.className = chainValid ? 'config-badge unlocked' : 'config-badge locked';
+    }
+    if (selectElements.auditChainStatusText) {
+        selectElements.auditChainStatusText.textContent = chainValid ? i18n[currentLang].audit_chain_valid : i18n[currentLang].audit_chain_invalid;
+    }
+}

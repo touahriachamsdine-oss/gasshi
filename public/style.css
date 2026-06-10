@@ -1356,6 +1356,95 @@ html[dir="rtl"] .readout-card::before {
     text-align: center;
 }
 
+.login-role-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.role-btn {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    font-family: inherit;
+    width: 100%;
+}
+
+.role-btn:hover {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+.role-btn:active {
+    transform: translateY(1px);
+}
+
+.role-icon {
+    font-size: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    transition: background-color 0.3s;
+}
+
+.role-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.role-title {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.role-desc {
+    font-size: 0.75rem;
+    color: var(--text-sub);
+    margin-top: 2px;
+}
+
+/* Specific Role Hover Glows */
+.role-btn.admin-btn:hover {
+    border-color: #ff3366;
+    box-shadow: 0 0 15px rgba(255, 51, 102, 0.3);
+}
+.role-btn.admin-btn:hover .role-icon {
+    background: rgba(255, 51, 102, 0.15);
+}
+
+.role-btn.engineer-btn:hover {
+    border-color: #00e5ff;
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.3);
+}
+.role-btn.engineer-btn:hover .role-icon {
+    background: rgba(0, 229, 255, 0.15);
+}
+
+.role-btn.operator-btn:hover {
+    border-color: #00ff87;
+    box-shadow: 0 0 15px rgba(0, 255, 135, 0.3);
+}
+.role-btn.operator-btn:hover .role-icon {
+    background: rgba(0, 255, 135, 0.15);
+}
+
+
 .user-profile-badge {
     display: flex;
     align-items: center;

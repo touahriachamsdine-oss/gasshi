@@ -392,16 +392,30 @@
                 <p data-i18n="login_subtitle">Enter credentials to unlock controller dashboard</p>
             </div>
             <form id="login-form" class="login-form">
-                <div class="input-group">
-                    <label for="login-username" data-i18n="login_username_label">Username</label>
-                    <input type="text" id="login-username" required placeholder="e.g. operator" autocomplete="username">
-                </div>
-                <div class="input-group">
-                    <label for="login-password" data-i18n="login_password_label">Password</label>
-                    <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+                <div class="login-role-buttons">
+                    <button type="button" class="role-btn admin-btn" id="login-as-admin">
+                        <span class="role-icon">🛡️</span>
+                        <div class="role-info">
+                            <span class="role-title">Admin</span>
+                            <span class="role-desc">Full Configuration Control</span>
+                        </div>
+                    </button>
+                    <button type="button" class="role-btn engineer-btn" id="login-as-engineer">
+                        <span class="role-icon">⚙️</span>
+                        <div class="role-info">
+                            <span class="role-title">Engineer</span>
+                            <span class="role-desc">Thresholds & Hardware Settings</span>
+                        </div>
+                    </button>
+                    <button type="button" class="role-btn operator-btn" id="login-as-operator">
+                        <span class="role-icon">👤</span>
+                        <div class="role-info">
+                            <span class="role-title">Operator</span>
+                            <span class="role-desc">Manual Operations & Monitoring</span>
+                        </div>
+                    </button>
                 </div>
                 <div id="login-error" class="login-error hidden"></div>
-                <button type="submit" class="action-btn login-btn-submit" id="login-submit-btn" data-i18n="login_btn_submit">Authenticate</button>
             </form>
         </div>
     </div>

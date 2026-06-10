@@ -32,6 +32,7 @@
 #include <LittleFS.h>
 #include <mbedtls/md.h>
 #include <mbedtls/base64.h>
+#include "types.h"
 
 // WiFi Settings - Modify with your local network details
 const char* ssid = "OnePlus 7T-5acc";
@@ -128,12 +129,6 @@ int base64UrlDecode(const String& input, uint8_t* output, size_t maxLen, size_t*
     }
     return mbedtls_base64_decode(output, maxLen, outLen, (const uint8_t*)s.c_str(), s.length());
 }
-
-struct UserJWT {
-    String username;
-    String role;
-    bool isValid;
-};
 
 UserJWT verifyJWT(const String& token, const String& secret) {
     UserJWT result = {"", "", false};
