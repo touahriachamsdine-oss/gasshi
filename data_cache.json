@@ -1,0 +1,29 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin",
+      "password_hash": "$2b$10$viUaugS8Nxixkam69K.gaeqVoq3LRbS52fcDerAdHocM3DRqf0NpO",
+      "role": "admin"
+    },
+    {
+      "id": 2,
+      "username": "engineer",
+      "password_hash": "$2b$10$JbH74zoweCWSa4PYEoYaMeM0voMykkrdxtP9XbD6y1fGQ2wPKUPnO",
+      "role": "engineer"
+    },
+    {
+      "id": 3,
+      "username": "operator",
+      "password_hash": "$2b$10$UEGnuA.se/LpAzr5ee8RKOntERqb85mfIHfPN9Hx1rgq33ub.J37S",
+      "role": "operator"
+    }
+  ],
+  "device_configs": [
+    { "key": "pm25_threshold", "value": "35.0" },
+    { "key": "spray_duration", "value": "10" },
+    { "key": "operation_mode", "value": "auto" }
+  ],
+  "readings": [],
+  "audit_logs": []
+}

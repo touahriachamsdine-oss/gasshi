@@ -52,6 +52,14 @@
 
             <!-- CONTROLS & LANG SELECTOR -->
             <div class="header-actions">
+                <div id="user-profile-badge" class="user-profile-badge hidden">
+                    <span id="user-role-dot" class="role-dot"></span>
+                    <span id="user-display-name">Username</span>
+                    <span id="user-display-role" class="role-tag">Role</span>
+                    <button class="logout-btn" id="logout-btn" title="Logout">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z" fill="currentColor"/></svg>
+                    </button>
+                </div>
                 <button class="action-btn text-btn" id="toggle-config-btn" title="Settings">
                     <svg class="icon-svg" viewBox="0 0 24 24">
                         <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>
@@ -207,8 +215,22 @@
             <!-- COLUMN 3: SETTINGS & CONTROLS -->
             <section class="grid-card settings-panel borderless-card">
                 <div class="card-glow"></div>
+                
+                <!-- LOCK OVERLAY FOR OPERATOR OR UNAUTHENTICATED -->
+                <div id="settings-lock-overlay" class="settings-locked-overlay hidden">
+                    <div class="settings-locked-content">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 17a2 2 0 0 0 2-2 2 2 0 0 0-2-2 2 2 0 0 0-2 2 2 2 0 0 0 2 2m6-9a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V10a2 2 0 0 1 2-2h1V6a5 5 0 0 1 5-5 5 5 0 0 1 5 5v2h1m-6-5a3 3 0 0 0-3 3v2h6V6a3 3 0 0 0-3-3z" fill="currentColor"/></svg>
+                        <p id="lock-overlay-msg" data-i18n="settings_locked_title">Settings Locked</p>
+                        <span id="lock-overlay-submsg" data-i18n="settings_locked_desc">Insufficient permissions to modify configuration</span>
+                    </div>
+                </div>
+
                 <div class="card-header">
                     <h2 data-i18n="system_settings">System Settings</h2>
+                    <div id="settings-lock-badge" class="config-lock-indicator locked">
+                        <svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/></svg>
+                        <span id="settings-lock-badge-text" data-i18n="badge_locked">Locked</span>
+                    </div>
                 </div>
 
                 <div class="settings-form">
@@ -293,6 +315,42 @@
                 </div>
             </section>
 
+            <!-- ADMIN ONLY AUDIT LOG PANEL -->
+            <section class="grid-card audit-panel borderless-card hidden" id="audit-log-panel">
+                <div class="card-glow"></div>
+                <div class="card-header">
+                    <h2 data-i18n="audit_log_title">Cryptographic System Audit Chain</h2>
+                    <div class="audit-chain-status">
+                        <span id="audit-chain-status-badge" class="chain-status-badge invalid">
+                            <span class="status-dot"></span>
+                            <span id="audit-chain-status-text">Validation Required</span>
+                        </span>
+                        <button class="action-btn verify-chain-btn" id="verify-chain-btn" data-i18n="btn_verify_chain">Verify Chain Integrity</button>
+                    </div>
+                </div>
+                <div class="audit-table-wrapper">
+                    <table class="audit-table">
+                        <thead>
+                            <tr>
+                                <th data-i18n="audit_th_seq">Seq</th>
+                                <th data-i18n="audit_th_timestamp">Timestamp</th>
+                                <th data-i18n="audit_th_user">User (Role)</th>
+                                <th data-i18n="audit_th_action">Action</th>
+                                <th data-i18n="audit_th_details">Details</th>
+                                <th data-i18n="audit_th_hash">Current Hash</th>
+                                <th data-i18n="audit_th_sig">Signature Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="audit-log-tbody">
+                            <!-- Populated dynamically -->
+                            <tr>
+                                <td colspan="7" class="empty-table" data-i18n="audit_empty">No audit records loaded. Click Verify to load and check chain integrity.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
         </main>
     </div>
 
@@ -314,6 +372,39 @@
             </div>
         </div>
     </dialog>
+
+    <!-- LOGIN OVERLAY -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-card glass-card">
+            <div class="login-header">
+                <svg viewBox="0 0 100 100" class="login-logo">
+                    <circle cx="50" cy="50" r="45" stroke="url(#loginGlow)" stroke-width="3" fill="none" />
+                    <path d="M35 50 Q50 35 65 50 T95 50" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" fill="none" />
+                    <circle cx="50" cy="50" r="10" fill="#00e5ff" class="pulse-core" />
+                    <defs>
+                        <linearGradient id="loginGlow" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#00ff87" />
+                            <stop offset="100%" stop-color="#60efff" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <h2 data-i18n="login_title">System Access Authentication</h2>
+                <p data-i18n="login_subtitle">Enter credentials to unlock controller dashboard</p>
+            </div>
+            <form id="login-form" class="login-form">
+                <div class="input-group">
+                    <label for="login-username" data-i18n="login_username_label">Username</label>
+                    <input type="text" id="login-username" required placeholder="e.g. operator" autocomplete="username">
+                </div>
+                <div class="input-group">
+                    <label for="login-password" data-i18n="login_password_label">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <div id="login-error" class="login-error hidden"></div>
+                <button type="submit" class="action-btn login-btn-submit" id="login-submit-btn" data-i18n="login_btn_submit">Authenticate</button>
+            </form>
+        </div>
+    </div>
 
     <!-- Connective Script file -->
     <script src="app.js"></script>

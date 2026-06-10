@@ -64,8 +64,31 @@ const i18n = {
         log_auto_stop: "Misting duration complete. Relay opened, returning to standby.",
         log_manual_start: "Manual relay override: Spray started.",
         log_manual_stop: "Manual relay override: Spray stopped.",
-        log_param_update: "Parameters updated: PM2.5 threshold = {t} µg/m³, duration = {d}s.",
-        log_db_history_loaded: "Database Connection OK: Loaded {count} historical data points from Neon."
+        log_db_history_loaded: "Database Connection OK: Loaded {count} historical data points from Neon.",
+        login_title: "System Access Authentication",
+        login_subtitle: "Enter credentials to unlock controller dashboard",
+        login_username_label: "Username",
+        login_password_label: "Password",
+        login_btn_submit: "Authenticate",
+        settings_locked_title: "Settings Locked",
+        settings_locked_desc: "Insufficient permissions to modify configuration",
+        badge_locked: "Locked",
+        badge_unlocked: "Unlocked",
+        audit_log_title: "Cryptographic System Audit Chain",
+        btn_verify_chain: "Verify Chain Integrity",
+        audit_th_seq: "Seq",
+        audit_th_timestamp: "Timestamp",
+        audit_th_user: "User (Role)",
+        audit_th_action: "Action",
+        audit_th_details: "Details",
+        audit_th_hash: "Current Hash",
+        audit_th_sig: "Signature Status",
+        audit_empty: "No audit records loaded. Click Verify to load and check chain integrity.",
+        audit_chain_valid: "Chain Verified (Secure)",
+        audit_chain_invalid: "Chain Corrupted (Warning)",
+        audit_chain_required: "Validation Required",
+        audit_sig_verified: "Verified",
+        audit_sig_failed: "Failed"
     },
     fr: {
         title: "AeroSpray // Contrôleur Intelligent SPS30",
@@ -127,8 +150,31 @@ const i18n = {
         log_auto_stop: "Durée d'atomisation terminée. Relais ouvert, retour en veille.",
         log_manual_start: "Contrôle manuel : Ravitaillement jet d'eau démarré.",
         log_manual_stop: "Contrôle manuel : Ravitaillement jet d'eau arrêté.",
-        log_param_update: "Paramètres mis à jour : seuil PM2.5 = {t} µg/m³, durée = {d}s.",
-        log_db_history_loaded: "Connexion DB OK : {count} points d'historique chargés depuis Neon."
+        log_db_history_loaded: "Connexion DB OK : {count} points d'historique chargés depuis Neon.",
+        login_title: "Authentification d'Accès Système",
+        login_subtitle: "Entrez vos identifiants pour déverrouiller le tableau de bord",
+        login_username_label: "Nom d'utilisateur",
+        login_password_label: "Mot de passe",
+        login_btn_submit: "S'authentifier",
+        settings_locked_title: "Paramètres Verrouillés",
+        settings_locked_desc: "Permissions insuffisantes pour modifier la configuration",
+        badge_locked: "Verrouillé",
+        badge_unlocked: "Déverrouillé",
+        audit_log_title: "Chaîne d'Audit Cryptographique du Système",
+        btn_verify_chain: "Vérifier l'Intégrité de la Chaîne",
+        audit_th_seq: "Séquence",
+        audit_th_timestamp: "Horodatage",
+        audit_th_user: "Utilisateur (Rôle)",
+        audit_th_action: "Action",
+        audit_th_details: "Détails",
+        audit_th_hash: "Hachage Actuel",
+        audit_th_sig: "Statut de Signature",
+        audit_empty: "Aucun enregistrement d'audit chargé. Cliquez sur Vérifier pour charger et vérifier l'intégrité de la chaîne.",
+        audit_chain_valid: "Chaîne Vérifiée (Sécurisée)",
+        audit_chain_invalid: "Chaîne Corrompue (Avertissement)",
+        audit_chain_required: "Validation Requise",
+        audit_sig_verified: "Vérifié",
+        audit_sig_failed: "Échec"
     },
     ar: {
         title: "إيرو-سبراي // متحكم جودة الهواء الذكي SPS30",
@@ -190,8 +236,31 @@ const i18n = {
         log_auto_stop: "انتهت فترة الرش المحددة. تم فتح الريليه والعودة لحالة الاستعداد.",
         log_manual_start: "تجاوز يدوي للمفتاح: بدء تشغيل رشاش المياه.",
         log_manual_stop: "تجاوز يدوي للمفتاح: إيقاف تشغيل رشاش المياه.",
-        log_param_update: "تم تحديث المعايير: حد PM2.5 = {t} ميكروغرام/م³، مدة الرش = {d} ثانية.",
-        log_db_history_loaded: "اتصال قاعدة البيانات ناجح: تم تحميل {count} من نقاط البيانات السابقة من Neon."
+        log_db_history_loaded: "اتصال قاعدة البيانات ناجح: تم تحميل {count} من نقاط البيانات السابقة من Neon.",
+        login_title: "مصادقة الوصول إلى النظام",
+        login_subtitle: "أدخل بيانات الاعتماد لفتح لوحة تحكم وحدة التحكم",
+        login_username_label: "اسم المستخدم",
+        login_password_label: "كلمة المرور",
+        login_btn_submit: "مصادقة",
+        settings_locked_title: "الإعدادات مقفلة",
+        settings_locked_desc: "صلاحيات غير كافية لتعديل التكوين",
+        badge_locked: "مغلق",
+        badge_unlocked: "مفتوح",
+        audit_log_title: "سلسلة تدقيق النظام التشفيرية",
+        btn_verify_chain: "التحقق من سلامة السلسلة",
+        audit_th_seq: "التسلسل",
+        audit_th_timestamp: "الطابع الزمني",
+        audit_th_user: "المستخدم (الدور)",
+        audit_th_action: "الإجراء",
+        audit_th_details: "التفاصيل",
+        audit_th_hash: "التجزئة الحالية",
+        audit_th_sig: "حالة التوقيع",
+        audit_empty: "لم يتم تحميل أي سجلات تدقيق. انقر فوق تحقق لتحميل والتحقق من سلامة السلسلة.",
+        audit_chain_valid: "تم التحقق من السلسلة (آمنة)",
+        audit_chain_invalid: "السلسلة تالفة (تحذير)",
+        audit_chain_required: "التحقق مطلوب",
+        audit_sig_verified: "تم التحقق",
+        audit_sig_failed: "فشل"
     }
 };
 
@@ -294,7 +363,7 @@ bool isRelayActive = false;
 unsigned long sprayStartTime = 0;
 float latestPM25 = 0.0; // Cache for the automated spray trigger
 
-// Sensor readings cache (Global variables)
+// Sensor readings cache (Global variables / Defaults for initial dry tests)
 float massPM1 = 4.8;
 float massPM25 = 11.2;
 float massPM4 = 15.6;
@@ -314,7 +383,7 @@ void notifyClients(String payload) {
 // Packages all readings and variables into a single JSON payload
 void sendSystemStatus() {
   StaticJsonDocument<512> doc;
-  
+
   uint16_t dataReadyFlag = 0;
   error = sensor.readDataReadyFlag(dataReadyFlag);
   if (error == NO_ERROR && dataReadyFlag) {
@@ -338,7 +407,6 @@ void sendSystemStatus() {
       numPM4 = nc4p0 / 10.0;
       numPM10 = nc10p0 / 10.0;
       typSize = typicalParticleSize / 10.0;
-      latestPM25 = massPM25;
     } else {
       Serial.print("readMeasurementValuesUint16 failed: ");
       errorToString(error, errorMessage, sizeof errorMessage);
@@ -349,6 +417,9 @@ void sendSystemStatus() {
     errorToString(error, errorMessage, sizeof errorMessage);
     Serial.println(errorMessage);
   }
+
+  // Update latestPM25 cache so automatic spray triggers can check it, even when using simulated/cached values
+  latestPM25 = massPM25;
 
   // Bind values to JSON object
   doc["pm1"] = massPM1;
@@ -666,7 +737,28 @@ const selectElements = {
     firmwareDialog: document.getElementById('firmware-dialog'),
     cppCodeBlock: document.getElementById('cpp-code-block'),
     closeDialogBtn: document.getElementById('close-dialog-btn'),
-    copyCodeBtn: document.getElementById('copy-code-btn')
+    copyCodeBtn: document.getElementById('copy-code-btn'),
+    
+    // Authentication Elements
+    loginOverlay: document.getElementById('login-overlay'),
+    loginForm: document.getElementById('login-form'),
+    loginUsername: document.getElementById('login-username'),
+    loginPassword: document.getElementById('login-password'),
+    loginError: document.getElementById('login-error'),
+    userProfileBadge: document.getElementById('user-profile-badge'),
+    userDisplayName: document.getElementById('user-display-name'),
+    userDisplayRole: document.getElementById('user-display-role'),
+    logoutBtn: document.getElementById('logout-btn'),
+    settingsLockOverlay: document.getElementById('settings-lock-overlay'),
+    settingsLockBadge: document.getElementById('settings-lock-badge'),
+    settingsLockBadgeText: document.getElementById('settings-lock-badge-text'),
+    
+    // Audit Panel Elements
+    auditLogPanel: document.getElementById('audit-log-panel'),
+    auditLogTbody: document.getElementById('audit-log-tbody'),
+    auditChainStatusBadge: document.getElementById('audit-chain-status-badge'),
+    auditChainStatusText: document.getElementById('audit-chain-status-text'),
+    verifyChainBtn: document.getElementById('verify-chain-btn')
 };
 
 // ----------------------------------------------------
