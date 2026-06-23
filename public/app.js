@@ -337,7 +337,7 @@ const arduinoCode = `/*
 #include <ArduinoJson.h>
 
 // WiFi Settings - Modify with your local network details
-const char* ssid = "YOUR_WIFI_SSID";
+const char* ssid = "Chams";
 const char* password = "YOUR_WIFI_PASSWORD";
 
 // Direct HTTP Database Logging (Optional direct log bypassing frontend bridging)
@@ -347,7 +347,7 @@ unsigned long lastDbPostTime = 0;
 const unsigned long DB_POST_INTERVAL = 6000; // Log to DB every 6 seconds
 
 // Hardware Mappings
-const int RELAY_PIN = 35;
+const int RELAY_PIN = 6;
 // I2C Pin Mappings for ESP32-S3 and SPS30 I2C interface
 const int SDA_PIN = 8;  // Connects to SPS30 Pin 2 (SDA)
 const int SCL_PIN = 9;  // Connects to SPS30 Pin 3 (SCL)

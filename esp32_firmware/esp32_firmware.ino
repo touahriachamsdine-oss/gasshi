@@ -174,7 +174,7 @@ unsigned long lastDbPostTime = 0;
 const unsigned long DB_POST_INTERVAL = 6000; // Log to DB every 6 seconds
 
 // Hardware Mappings
-const int RELAY_PIN = 35;
+const int RELAY_PIN = 6;
 const int SDA_PIN = 8;  // Connects to SPS30 Pin 2 (SDA)
 const int SCL_PIN = 9;  // Connects to SPS30 Pin 3 (SCL)
 const int OVERRIDE_PIN = 0; // BOOT button (active LOW)
