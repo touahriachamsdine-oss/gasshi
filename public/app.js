@@ -368,6 +368,7 @@ static int16_t error;
 
 // Threshold states (Shared between WebSocket requests and automated runs)
 float thresholdPM25 = 35.0;
+float thresholdPM1 = 15.0; // Dangerous level for PM1.0
 int sprayDurationSec = 10;
 bool isManualMode = false;
 bool isRelayActive = false;
@@ -398,28 +399,28 @@ void sendSystemStatus() {
   uint16_t dataReadyFlag = 0;
   error = sensor.readDataReadyFlag(dataReadyFlag);
   if (error == NO_ERROR && dataReadyFlag) {
-    uint16_t mc1p0 = 0, mc2p5 = 0, mc4p0 = 0, mc10p0 = 0;
-    uint16_t nc0p5 = 0, nc1p0 = 0, nc2p5 = 0, nc4p0 = 0, nc10p0 = 0;
-    uint16_t typicalParticleSize = 0;
+    float mc1p0 = 0.0, mc2p5 = 0.0, mc4p0 = 0.0, mc10p0 = 0.0;
+    float nc0p5 = 0.0, nc1p0 = 0.0, nc2p5 = 0.0, nc4p0 = 0.0, nc10p0 = 0.0;
+    float typicalParticleSize = 0.0;
 
-    error = sensor.readMeasurementValuesUint16(
+    error = sensor.readMeasurementValues(
       mc1p0, mc2p5, mc4p0, mc10p0,
       nc0p5, nc1p0, nc2p5, nc4p0,
       nc10p0, typicalParticleSize
     );
     if (error == NO_ERROR) {
-      massPM1 = mc1p0 / 10.0;
-      massPM25 = mc2p5 / 10.0;
-      massPM4 = mc4p0 / 10.0;
-      massPM10 = mc10p0 / 10.0;
-      numPM05 = nc0p5 / 10.0;
-      numPM1 = nc1p0 / 10.0;
-      numPM25 = nc2p5 / 10.0;
-      numPM4 = nc4p0 / 10.0;
-      numPM10 = nc10p0 / 10.0;
-      typSize = typicalParticleSize / 10.0;
+      massPM1 = mc1p0;
+      massPM25 = mc2p5;
+      massPM4 = mc4p0;
+      massPM10 = mc10p0;
+      numPM05 = nc0p5;
+      numPM1 = nc1p0;
+      numPM25 = nc2p5;
+      numPM4 = nc4p0;
+      numPM10 = nc10p0;
+      typSize = typicalParticleSize;
     } else {
-      Serial.print("readMeasurementValuesUint16 failed: ");
+      Serial.print("readMeasurementValues failed: ");
       errorToString(error, errorMessage, sizeof errorMessage);
       Serial.println(errorMessage);
     }
@@ -559,7 +560,7 @@ void setup() {
     Serial.println((const char*)productType);
   }
 
-  error = sensor.startMeasurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_UINT16);
+  error = sensor.startMeasurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_FLOAT);
   if (error != NO_ERROR) {
     Serial.print("Error trying to execute startMeasurement(): ");
     errorToString(error, errorMessage, sizeof errorMessage);
@@ -601,11 +602,11 @@ void loop() {
     // Automating air purification mist loops
     if (!isManualMode) {
       // Auto Start Trigger
-      if (latestPM25 > thresholdPM25 && !isRelayActive) {
+      if ((latestPM25 > thresholdPM25 || massPM1 > thresholdPM1) && !isRelayActive) {
         isRelayActive = true;
         digitalWrite(RELAY_PIN, HIGH);
         sprayStartTime = millis();
-        Serial.printf("Automated spray initiated: PM2.5 (%.1f) > Threshold (%.1f)\\n", latestPM25, thresholdPM25);
+        Serial.printf("Automated spray initiated: PM2.5 (%.1f) or PM1.0 (%.1f) exceeded\\n", latestPM25, massPM1);
         sendSystemStatus();
       }
       

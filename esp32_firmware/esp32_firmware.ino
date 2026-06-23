@@ -174,7 +174,7 @@ unsigned long lastDbPostTime = 0;
 const unsigned long DB_POST_INTERVAL = 6000; // Log to DB every 6 seconds
 
 // Hardware Mappings
-const int RELAY_PIN = 6;
+const int RELAY_PIN = 35;
 const int SDA_PIN = 8;  // Connects to SPS30 Pin 2 (SDA)
 const int SCL_PIN = 9;  // Connects to SPS30 Pin 3 (SCL)
 const int OVERRIDE_PIN = 0; // BOOT button (active LOW)
@@ -211,13 +211,7 @@ unsigned long sprayStartTime = 0;
 float latestPM25 = 0.0; // Cache for the automated spray trigger
 unsigned long timeOffsetSeconds = 0; // Epoch offset for offline timestamp calculation
 
-// Groq AI Smart Spray Configuration
-String groqApiKey = ""; // Loaded from Preferences at boot
-const char* groqEndpoint = "https://api.groq.com/openai/v1/chat/completions";
-unsigned long lastGroqCall = 0;
-const unsigned long GROQ_INTERVAL = 15000; // Consult AI every 15 seconds max
-String lastAiDecision = "";
-bool aiSprayRecommended = false;
+// Groq AI Smart Spray Configuration deleted
 
 // Sensor readings cache (Global variables / Defaults for initial dry tests)
 float massPM1 = 4.8;
@@ -343,13 +337,9 @@ void loadConfig() {
     thresholdPM1 = preferences.getFloat("threshold_pm1", 15.0);
     sprayDurationSec = preferences.getInt("duration", 10);
     isManualMode = preferences.getBool("manual_mode", false);
-    groqApiKey = preferences.getString("groq_key", "");
     preferences.end();
-    Serial.printf("Config loaded: Threshold=%.1f, ThresholdPM1=%.1f, Duration=%d, Manual=%d, GroqKey=%s\n", 
-                  thresholdPM25, thresholdPM1, sprayDurationSec, isManualMode, groqApiKey.length() > 0 ? "SET" : "MISSING");
-    if (groqApiKey.length() == 0) {
-        Serial.println("WARNING: Groq API key not set. Send 'SET_GROQ_KEY:<key>' via Serial to configure.");
-    }
+    Serial.printf("Config loaded: Threshold=%.1f, ThresholdPM1=%.1f, Duration=%d, Manual=%d\n", 
+                  thresholdPM25, thresholdPM1, sprayDurationSec, isManualMode);
 }
 
 void saveConfig() {
@@ -505,28 +495,28 @@ void sendSystemStatus() {
   uint16_t dataReadyFlag = 0;
   error = sensor.readDataReadyFlag(dataReadyFlag);
   if (error == NO_ERROR && dataReadyFlag) {
-    uint16_t mc1p0 = 0, mc2p5 = 0, mc4p0 = 0, mc10p0 = 0;
-    uint16_t nc0p5 = 0, nc1p0 = 0, nc2p5 = 0, nc4p0 = 0, nc10p0 = 0;
-    uint16_t typicalParticleSize = 0;
+    float mc1p0 = 0.0, mc2p5 = 0.0, mc4p0 = 0.0, mc10p0 = 0.0;
+    float nc0p5 = 0.0, nc1p0 = 0.0, nc2p5 = 0.0, nc4p0 = 0.0, nc10p0 = 0.0;
+    float typicalParticleSize = 0.0;
 
-    error = sensor.readMeasurementValuesUint16(
+    error = sensor.readMeasurementValues(
       mc1p0, mc2p5, mc4p0, mc10p0,
       nc0p5, nc1p0, nc2p5, nc4p0,
       nc10p0, typicalParticleSize
     );
     if (error == NO_ERROR) {
-      massPM1 = mc1p0 / 10.0;
-      massPM25 = mc2p5 / 10.0;
-      massPM4 = mc4p0 / 10.0;
-      massPM10 = mc10p0 / 10.0;
-      numPM05 = nc0p5 / 10.0;
-      numPM1 = nc1p0 / 10.0;
-      numPM25 = nc2p5 / 10.0;
-      numPM4 = nc4p0 / 10.0;
-      numPM10 = nc10p0 / 10.0;
-      typSize = typicalParticleSize / 10.0;
+      massPM1 = mc1p0;
+      massPM25 = mc2p5;
+      massPM4 = mc4p0;
+      massPM10 = mc10p0;
+      numPM05 = nc0p5;
+      numPM1 = nc1p0;
+      numPM25 = nc2p5;
+      numPM4 = nc4p0;
+      numPM10 = nc10p0;
+      typSize = typicalParticleSize;
     } else {
-      Serial.print("readMeasurementValuesUint16 failed: ");
+      Serial.print("readMeasurementValues failed: ");
       errorToString(error, errorMessage, sizeof errorMessage);
       Serial.println(errorMessage);
     }
@@ -879,7 +869,7 @@ void setup() {
     Serial.println((const char*)productType);
   }
 
-  error = sensor.startMeasurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_UINT16);
+  error = sensor.startMeasurement(SPS30_OUTPUT_FORMAT_OUTPUT_FORMAT_FLOAT);
   if (error != NO_ERROR) {
     Serial.print("Error trying to execute startMeasurement(): ");
     errorToString(error, errorMessage, sizeof errorMessage);
@@ -923,68 +913,12 @@ void setup() {
   syncOfflineLogsToServer();
 }
 
-// -------------------------------------------------------------------------
-// GROQ AI - SMART SPRAY DECISION ENGINE
-// -------------------------------------------------------------------------
-bool consultGroqAI(float pm1, float pm25, float pm10, float threshold) {
-    if (WiFi.status() != WL_CONNECTED) return false;
-    if (millis() - lastGroqCall < GROQ_INTERVAL) return aiSprayRecommended;
-    lastGroqCall = millis();
-
-    WiFiClientSecure client;
-    client.setInsecure(); // Skip SSL cert verification for speed
-    HTTPClient http;
-    http.begin(client, groqEndpoint);
-    http.addHeader("Content-Type", "application/json");
-    http.addHeader("Authorization", String("Bearer ") + groqApiKey);
-    http.setTimeout(5000);
-
-    // Build the prompt with real sensor data
-    String prompt = "You are an air quality control AI for an industrial water misting system. "
-                    "Based on this sensor data, respond ONLY with 'SPRAY' or 'WAIT' (one word, nothing else). "
-                    "Consider: PM1=" + String(pm1, 1) + " ug/m3, PM2.5=" + String(pm25, 1) +
-                    " ug/m3, PM10=" + String(pm10, 1) + " ug/m3. Threshold=" + String(threshold, 1) +
-                    " ug/m3. If PM2.5 is above threshold or trending dangerously, say SPRAY. "
-                    "If readings are near-threshold but not critical, say WAIT.";
-
-    String body = "{\"model\":\"llama-3.3-70b-versatile\",\"messages\":[{\"role\":\"user\",\"content\":\"" + prompt + "\"}],\"max_tokens\":5,\"temperature\":0.1}";
-
-    int httpCode = http.POST(body);
-    if (httpCode == 200) {
-        String response = http.getString();
-        // Parse the JSON response to extract the AI's answer
-        DynamicJsonDocument respDoc(2048);
-        DeserializationError err = deserializeJson(respDoc, response);
-        if (!err) {
-            String answer = respDoc["choices"][0]["message"]["content"].as<String>();
-            answer.trim();
-            answer.toUpperCase();
-            lastAiDecision = answer;
-            aiSprayRecommended = (answer.indexOf("SPRAY") >= 0);
-            Serial.printf("[Groq AI] Decision: %s (PM2.5=%.1f)\n", answer.c_str(), pm25);
-        }
-    } else {
-        Serial.printf("[Groq AI] Request failed: HTTP %d\n", httpCode);
-    }
-    http.end();
-    return aiSprayRecommended;
-}
+// Groq AI smart spraying engine completely removed
 
 void loop() {
   ws.cleanupClients();
   
-  // Serial command handler for runtime configuration
-  if (Serial.available()) {
-      String cmd = Serial.readStringUntil('\n');
-      cmd.trim();
-      if (cmd.startsWith("SET_GROQ_KEY:")) {
-          groqApiKey = cmd.substring(13);
-          preferences.begin("mine-config", false);
-          preferences.putString("groq_key", groqApiKey);
-          preferences.end();
-          Serial.println("Groq API key saved to Preferences successfully.");
-      }
-  }
+  // Serial command handler for runtime configuration (Groq key handler removed)
   
   // Physical Override Button Check
   static bool lastOverrideState = HIGH;
@@ -1028,31 +962,16 @@ void loop() {
     lastReading = millis();
     sendSystemStatus();
     
-    // AI-Enhanced Automated Air Purification
+    // Automated Air Purification
     if (!isManualMode) {
-      // Auto Start Trigger - consult Groq AI for smarter decisions
       if (!isRelayActive) {
-        bool shouldSpray = false;
-        
-        // Try AI decision first
-        if (WiFi.status() == WL_CONNECTED) {
-            shouldSpray = consultGroqAI(massPM1, latestPM25, massPM10, thresholdPM25);
-        }
-        
-        // Fallback: use threshold-only if AI unavailable or PM2.5/PM1.0 critically high
-        if (!shouldSpray && (latestPM25 > thresholdPM25 || massPM1 > thresholdPM1)) {
-            shouldSpray = true;
-        }
-        
-        if (shouldSpray) {
+        if (latestPM25 > thresholdPM25 || massPM1 > thresholdPM1) {
             isRelayActive = true;
             digitalWrite(RELAY_PIN, HIGH);
             sprayStartTime = millis();
-            String reason = lastAiDecision.length() > 0 
-                ? "AI-assisted spray: " + lastAiDecision + " (PM2.5=" + String(latestPM25) + ", PM1.0=" + String(massPM1) + ")"
-                : (massPM1 > thresholdPM1) 
-                    ? "Dangerous PM1.0 level: PM1.0 (" + String(massPM1) + ") > " + String(thresholdPM1)
-                    : "Threshold spray: PM2.5 (" + String(latestPM25) + ") > " + String(thresholdPM25);
+            String reason = (massPM1 > thresholdPM1) 
+                ? "Dangerous PM1.0 level: PM1.0 (" + String(massPM1) + ") > " + String(thresholdPM1)
+                : "Threshold spray: PM2.5 (" + String(latestPM25) + ") > " + String(thresholdPM25);
             logEvent("system_auto", "spray_on", reason);
             Serial.println(reason);
             sendSystemStatus();
