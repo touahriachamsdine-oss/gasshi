@@ -373,52 +373,6 @@
         </div>
     </dialog>
 
-    <!-- LOGIN OVERLAY -->
-    <div id="login-overlay" class="login-overlay">
-        <div class="login-card glass-card">
-            <div class="login-header">
-                <svg viewBox="0 0 100 100" class="login-logo">
-                    <circle cx="50" cy="50" r="45" stroke="url(#loginGlow)" stroke-width="3" fill="none" />
-                    <path d="M35 50 Q50 35 65 50 T95 50" stroke="#00e5ff" stroke-width="4" stroke-linecap="round" fill="none" />
-                    <circle cx="50" cy="50" r="10" fill="#00e5ff" class="pulse-core" />
-                    <defs>
-                        <linearGradient id="loginGlow" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#00ff87" />
-                            <stop offset="100%" stop-color="#60efff" />
-                        </linearGradient>
-                    </defs>
-                </svg>
-                <h2 data-i18n="login_title">System Access Authentication</h2>
-                <p data-i18n="login_subtitle">Enter credentials to unlock controller dashboard</p>
-            </div>
-            <form id="login-form" class="login-form">
-                <div class="login-role-buttons">
-                    <button type="button" class="role-btn admin-btn" id="login-as-admin">
-                        <span class="role-icon">🛡️</span>
-                        <div class="role-info">
-                            <span class="role-title">Admin</span>
-                            <span class="role-desc">Full Configuration Control</span>
-                        </div>
-                    </button>
-                    <button type="button" class="role-btn engineer-btn" id="login-as-engineer">
-                        <span class="role-icon">⚙️</span>
-                        <div class="role-info">
-                            <span class="role-title">Engineer</span>
-                            <span class="role-desc">Thresholds & Hardware Settings</span>
-                        </div>
-                    </button>
-                    <button type="button" class="role-btn operator-btn" id="login-as-operator">
-                        <span class="role-icon">👤</span>
-                        <div class="role-info">
-                            <span class="role-title">Operator</span>
-                            <span class="role-desc">Manual Operations & Monitoring</span>
-                        </div>
-                    </button>
-                </div>
-                <div id="login-error" class="login-error hidden"></div>
-            </form>
-        </div>
-    </div>
 
     <!-- Connective Script file -->
     <script src="app.js"></script>
