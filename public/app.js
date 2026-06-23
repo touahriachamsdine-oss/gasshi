@@ -280,6 +280,7 @@ let isSimulatorActive = true;
 let simulationInterval = null;
 let sprayTimeout = null;
 let pm25Threshold = 25.0; // Default trigger threshold
+let pm1Threshold = 15.0;  // PM1.0 safety threshold (µg/m³)
 let sprayDuration = 10;   // Default duration in seconds
 let espAddress = '192.168.1.100'; // Default target IP
 
@@ -717,6 +718,15 @@ const selectElements = {
     pm10Num: document.getElementById('pm10-num'),
     typicalSize: document.getElementById('typical-size'),
     
+    // AI Diagnostics Elements
+    aiClassificationText: document.getElementById('ai-classification-text'),
+    aiConfidenceVal: document.getElementById('ai-confidence-val'),
+    aiAnomalyVal: document.getElementById('ai-anomaly-val'),
+    
+    // PM1.0 Threshold Elements
+    pm1ThresholdInput: document.getElementById('pm1-threshold'),
+    thresholdPm1Val: document.getElementById('threshold-pm1-val'),
+    
     systemSettings: document.querySelector('[data-i18n="system_settings"]'),
     labelPm25Threshold: document.querySelector('[data-i18n="label_pm25_threshold"]'),
     pm25ThresholdHint: document.querySelector('[data-i18n="pm25_threshold_hint"]'),
@@ -1102,6 +1112,34 @@ function updateSPS30Readouts(data) {
         .then(response => {
             if (!response.ok) {
                 console.warn('Failed to post throttled reading to Neon:', response.statusText);
+                return null;
+            }
+            return response.json();
+        })
+        .then(result => {
+            if (result && result.success && result.data) {
+                const ai = result.data;
+                // Inject AI analytics from server RETURNING clause into dashboard
+                if (ai.ai_classification && selectElements.aiClassificationText) {
+                    selectElements.aiClassificationText.innerText = ai.ai_classification;
+                    // Color-code classification
+                    const classColors = {
+                        'Excellent': '#00ff87', 'Good': '#60efff', 'Moderate': '#ffb300',
+                        'Poor': '#ff6b35', 'Hazardous': '#ff2a5f', 'Severe': '#7e22ce'
+                    };
+                    selectElements.aiClassificationText.style.color = classColors[ai.ai_classification] || '#00e5ff';
+                }
+                if (ai.ai_confidence !== undefined && ai.ai_confidence !== null && selectElements.aiConfidenceVal) {
+                    selectElements.aiConfidenceVal.innerText = parseFloat(ai.ai_confidence).toFixed(1);
+                }
+                if (ai.ai_anomaly_score !== undefined && ai.ai_anomaly_score !== null && selectElements.aiAnomalyVal) {
+                    const anomaly = parseFloat(ai.ai_anomaly_score).toFixed(2);
+                    selectElements.aiAnomalyVal.innerText = anomaly;
+                    // Dynamic anomaly color: green < 0.3, yellow < 0.6, red >= 0.6
+                    if (anomaly < 0.3) selectElements.aiAnomalyVal.style.color = '#00ff87';
+                    else if (anomaly < 0.6) selectElements.aiAnomalyVal.style.color = '#ffb300';
+                    else selectElements.aiAnomalyVal.style.color = '#ff3d00';
+                }
             }
         })
         .catch(err => {
@@ -1207,9 +1245,11 @@ function runSensorSimulation() {
 
         updateSPS30Readouts(readoutData);
 
-        // Auto trigger validation
-        if (!isManualMode && pm25 > pm25Threshold && !isRelayOpen) {
-            triggerAutomatedSpray();
+        // Auto trigger validation (PM2.5 OR PM1.0 safety threshold)
+        if (!isManualMode && !isRelayOpen) {
+            if (pm25 > pm25Threshold || pm1 > pm1Threshold) {
+                triggerAutomatedSpray();
+            }
         }
     }, 2000);
 }
@@ -1240,6 +1280,7 @@ function connectToESP32() {
             // Sync current configurations to hardware
             webSocket.send(JSON.stringify({
                 threshold: pm25Threshold,
+                threshold_pm1: pm1Threshold,
                 duration: sprayDuration,
                 command: isManualMode ? "set_mode_manual" : "set_mode_auto",
                 token: currentToken || ''
@@ -1299,6 +1340,12 @@ function connectToESP32() {
 // ----------------------------------------------------
 function updateThresholdDisplay() {
     selectElements.thresholdVal.innerText = pm25Threshold;
+}
+
+function updatePm1ThresholdDisplay() {
+    if (selectElements.thresholdPm1Val) {
+        selectElements.thresholdPm1Val.innerText = pm1Threshold;
+    }
 }
 
 function updateDurationDisplay() {
@@ -1369,6 +1416,19 @@ function setupEventListeners() {
             webSocket.send(JSON.stringify({ threshold: pm25Threshold }));
         }
     });
+
+    // 4b. PM1.0 Safety Threshold slider
+    if (selectElements.pm1ThresholdInput) {
+        selectElements.pm1ThresholdInput.addEventListener('input', (e) => {
+            pm1Threshold = parseFloat(e.target.value);
+            updatePm1ThresholdDisplay();
+            logEvent('log_param_update', { pm1_threshold: pm1Threshold });
+
+            if (webSocket && webSocket.readyState === WebSocket.OPEN) {
+                webSocket.send(JSON.stringify({ threshold_pm1: pm1Threshold }));
+            }
+        });
+    }
 
     selectElements.sprayDurationInput.addEventListener('input', (e) => {
         sprayDuration = parseInt(e.target.value);
@@ -1542,6 +1602,7 @@ function applyRolePermissions() {
 
     // Disable sliders for operators
     if (selectElements.pm25ThresholdInput) selectElements.pm25ThresholdInput.disabled = !canEditSettings;
+    if (selectElements.pm1ThresholdInput) selectElements.pm1ThresholdInput.disabled = !canEditSettings;
     if (selectElements.sprayDurationInput) selectElements.sprayDurationInput.disabled = !canEditSettings;
 
     // Audit log panel: admin only

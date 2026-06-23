@@ -964,6 +964,7 @@ html[dir="rtl"] .readout-card::before {
 .pm25-color { background-color: var(--color-primary); }
 .pm10-color { background-color: rgba(79, 70, 229, 0.85); }
 .spray-color { background-color: rgba(255, 42, 95, 0.25); border: 1px dashed var(--color-danger); border-radius: 2px;}
+.anomaly-color { background-color: rgba(255, 61, 0, 0.85); }
 
 .analytics-layout {
     display: grid;

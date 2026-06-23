@@ -103,6 +103,9 @@ async function safeQuery(queryText, values = []) {
         pm1: values[0], pm25: values[1], pm4: values[2], pm10: values[3],
         nc05: values[4], nc1: values[5], nc25: values[6], nc4: values[7], nc10: values[8],
         tps: values[9], relay: values[10], mode: values[11], source: values[12],
+        ai_classification: values[13] !== undefined ? values[13] : null,
+        ai_confidence: values[14] !== undefined ? values[14] : null,
+        ai_anomaly_score: values[15] !== undefined ? values[15] : null,
         created_at: new Date().toISOString()
       };
       localData.readings.push(newReading);
@@ -554,6 +557,59 @@ app.get('/api/auth/audit-logs', authenticateToken, requireRole(['admin']), async
   }
 });
 
+// Dynamic AI Inference helper to classify air quality and calculate confidence/anomaly scores
+function calculateAIAnalytics(pm1, pm25, pm4, pm10, nc05, nc1, nc25, nc4, nc10, tps) {
+  const totalPM = pm1 + pm25 + pm4 + pm10;
+  
+  let classification = "Standard Air Quality";
+  let confidence = 0.75;
+  let anomalyScore = 0.10;
+  
+  if (totalPM === 0) {
+    return {
+      classification: "Clean Air (Zero Dust)",
+      confidence: 0.99,
+      anomalyScore: 0.0
+    };
+  }
+
+  // Ratios
+  const r_small = pm25 / (pm10 + 0.0001);
+  const r_ultrafine = pm1 / (pm25 + 0.0001);
+  const r_coarse = (pm10 - pm25) / (pm10 + 0.0001);
+  
+  // High PM2.5/PM10 levels increase the anomaly score
+  anomalyScore = Math.min(1.0, (pm25 * 0.015) + (pm10 * 0.005) + (pm1 * 0.02));
+  
+  if (pm1 > 15.0) {
+    classification = "Critical PM1.0 Danger";
+    confidence = Math.min(0.98, 0.85 + (pm1 - 15) * 0.01);
+    anomalyScore = Math.max(anomalyScore, 0.75 + Math.min(0.25, (pm1 - 15) * 0.01));
+  } else if (pm10 < 12.0 && pm25 < 6.0) {
+    classification = "Clean Air";
+    confidence = Math.min(0.98, 0.80 + (12.0 - pm10) * 0.015);
+    anomalyScore = Math.max(0.0, (pm25 * 0.01));
+  } else if (r_small > 0.82 && pm25 > 12.0) {
+    classification = "Fumes & Exhaust Smoke";
+    confidence = Math.min(0.95, 0.78 + r_small * 0.15);
+  } else if (r_coarse > 0.75 && pm10 > 45.0) {
+    classification = "Coarse Dust & Sand";
+    confidence = Math.min(0.96, 0.80 + r_coarse * 0.12);
+  } else if (pm25 > 35.0 || pm10 > 75.0) {
+    classification = "Industrial Smog";
+    confidence = 0.82;
+  } else {
+    classification = "Standard Suspended Particulates";
+    confidence = 0.70;
+  }
+
+  // Normalize values
+  confidence = parseFloat(Math.min(1.0, Math.max(0.0, confidence)).toFixed(2));
+  anomalyScore = parseFloat(Math.min(1.0, Math.max(0.0, anomalyScore)).toFixed(2));
+
+  return { classification, confidence, anomalyScore };
+}
+
 // API Endpoint to log sensor readings
 app.post('/api/readings', async (req, res) => {
   try {
@@ -569,19 +625,43 @@ app.post('/api/readings', async (req, res) => {
 
     const relayVal = (relay === true || String(relay).toLowerCase() === 'true' || parseInt(relay) === 1) ? 1 : 0;
 
+    const p1 = parseFloat(pm1) || 0;
+    const p25 = parseFloat(pm25) || 0;
+    const p4 = parseFloat(pm4) || 0;
+    const p10 = parseFloat(pm10) || 0;
+    const n05 = parseFloat(nc05) || 0;
+    const n1 = parseFloat(nc1) || 0;
+    const n25 = parseFloat(nc25) || 0;
+    const n4 = parseFloat(nc4) || 0;
+    const n10 = parseFloat(nc10) || 0;
+    const temp = parseFloat(tps) || 0;
+
+    let aiClass = req.body.ai_classification;
+    let aiConf = req.body.ai_confidence !== undefined ? parseFloat(req.body.ai_confidence) : undefined;
+    let aiAnomaly = req.body.ai_anomaly_score !== undefined ? parseFloat(req.body.ai_anomaly_score) : undefined;
+
+    if (aiClass === undefined || aiConf === undefined || aiAnomaly === undefined) {
+      const analytics = calculateAIAnalytics(p1, p25, p4, p10, n05, n1, n25, n4, n10, temp);
+      if (aiClass === undefined) aiClass = analytics.classification;
+      if (aiConf === undefined) aiConf = analytics.confidence;
+      if (aiAnomaly === undefined) aiAnomaly = analytics.anomalyScore;
+    }
+
     const queryText = `
       INSERT INTO pm_readings (
         pm1, pm25, pm4, pm10,
         nc05, nc1, nc25, nc4, nc10,
-        tps, relay, mode, source
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING id, created_at;
+        tps, relay, mode, source,
+        ai_classification, ai_confidence, ai_anomaly_score
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      RETURNING id, created_at, ai_classification, ai_confidence, ai_anomaly_score;
     `;
 
     const values = [
-      parseFloat(pm1) || 0, parseFloat(pm25) || 0, parseFloat(pm4) || 0, parseFloat(pm10) || 0,
-      parseFloat(nc05) || 0, parseFloat(nc1) || 0, parseFloat(nc25) || 0, parseFloat(nc4) || 0, parseFloat(nc10) || 0,
-      parseFloat(tps) || 0, relayVal, mode || 'auto', source || 'simulator'
+      p1, p25, p4, p10,
+      n05, n1, n25, n4, n10,
+      temp, relayVal, mode || 'auto', source || 'simulator',
+      aiClass, aiConf, aiAnomaly
     ];
 
     const result = await safeQuery(queryText, values);
@@ -601,7 +681,8 @@ app.get('/api/readings', authenticateToken, async (req, res) => {
   try {
     const queryText = `
       SELECT * FROM (
-        SELECT id, pm1, pm25, pm4, pm10, nc05, nc1, nc25, nc4, nc10, tps, relay, mode, source, created_at
+        SELECT id, pm1, pm25, pm4, pm10, nc05, nc1, nc25, nc4, nc10, tps, relay, mode, source,
+               ai_classification, ai_confidence, ai_anomaly_score, created_at
         FROM pm_readings
         ORDER BY created_at DESC
         LIMIT 100

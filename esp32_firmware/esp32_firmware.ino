@@ -202,6 +202,7 @@ static int16_t error;
 
 // Threshold states (Shared between WebSocket requests and automated runs)
 float thresholdPM25 = 35.0;
+float thresholdPM1 = 15.0; // Dangerous level for PM1.0
 int sprayDurationSec = 10;
 bool isManualMode = false;
 bool isRelayActive = false;
@@ -339,12 +340,13 @@ String getSystemTimeISO() {
 void loadConfig() {
     preferences.begin("mine-config", false);
     thresholdPM25 = preferences.getFloat("threshold", 35.0);
+    thresholdPM1 = preferences.getFloat("threshold_pm1", 15.0);
     sprayDurationSec = preferences.getInt("duration", 10);
     isManualMode = preferences.getBool("manual_mode", false);
     groqApiKey = preferences.getString("groq_key", "");
     preferences.end();
-    Serial.printf("Config loaded: Threshold=%.1f, Duration=%d, Manual=%d, GroqKey=%s\n", 
-                  thresholdPM25, sprayDurationSec, isManualMode, groqApiKey.length() > 0 ? "SET" : "MISSING");
+    Serial.printf("Config loaded: Threshold=%.1f, ThresholdPM1=%.1f, Duration=%d, Manual=%d, GroqKey=%s\n", 
+                  thresholdPM25, thresholdPM1, sprayDurationSec, isManualMode, groqApiKey.length() > 0 ? "SET" : "MISSING");
     if (groqApiKey.length() == 0) {
         Serial.println("WARNING: Groq API key not set. Send 'SET_GROQ_KEY:<key>' via Serial to configure.");
     }
@@ -353,6 +355,7 @@ void loadConfig() {
 void saveConfig() {
     preferences.begin("mine-config", false);
     preferences.putFloat("threshold", thresholdPM25);
+    preferences.putFloat("threshold_pm1", thresholdPM1);
     preferences.putInt("duration", sprayDurationSec);
     preferences.putBool("manual_mode", isManualMode);
     preferences.end();
@@ -575,7 +578,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
         }
     }
 
-    if (!doc.containsKey("command") && !doc.containsKey("threshold") && !doc.containsKey("duration")) {
+    if (!doc.containsKey("command") && !doc.containsKey("threshold") && !doc.containsKey("threshold_pm1") && !doc.containsKey("duration")) {
         return;
     }
 
@@ -616,6 +619,14 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
       saveConfig();
       logEvent(username, "config_threshold_updated", "PM2.5 Threshold updated from " + String(oldThresh) + " to " + String(thresholdPM25) + " ug/m3");
       Serial.printf("PM2.5 Threshold updated: %.1f µg/m3\n", thresholdPM25);
+    }
+    
+    if (doc.containsKey("threshold_pm1")) {
+      float oldThresh = thresholdPM1;
+      thresholdPM1 = doc["threshold_pm1"].as<float>();
+      saveConfig();
+      logEvent(username, "config_threshold_pm1_updated", "PM1.0 Threshold updated from " + String(oldThresh) + " to " + String(thresholdPM1) + " ug/m3");
+      Serial.printf("PM1.0 Threshold updated: %.1f µg/m3\n", thresholdPM1);
     }
     
     if (doc.containsKey("duration")) {
@@ -1028,8 +1039,8 @@ void loop() {
             shouldSpray = consultGroqAI(massPM1, latestPM25, massPM10, thresholdPM25);
         }
         
-        // Fallback: use threshold-only if AI unavailable or PM2.5 critically high
-        if (!shouldSpray && latestPM25 > thresholdPM25) {
+        // Fallback: use threshold-only if AI unavailable or PM2.5/PM1.0 critically high
+        if (!shouldSpray && (latestPM25 > thresholdPM25 || massPM1 > thresholdPM1)) {
             shouldSpray = true;
         }
         
@@ -1038,8 +1049,10 @@ void loop() {
             digitalWrite(RELAY_PIN, HIGH);
             sprayStartTime = millis();
             String reason = lastAiDecision.length() > 0 
-                ? "AI-assisted spray: " + lastAiDecision + " (PM2.5=" + String(latestPM25) + ")"
-                : "Threshold spray: PM2.5 (" + String(latestPM25) + ") > " + String(thresholdPM25);
+                ? "AI-assisted spray: " + lastAiDecision + " (PM2.5=" + String(latestPM25) + ", PM1.0=" + String(massPM1) + ")"
+                : (massPM1 > thresholdPM1) 
+                    ? "Dangerous PM1.0 level: PM1.0 (" + String(massPM1) + ") > " + String(thresholdPM1)
+                    : "Threshold spray: PM2.5 (" + String(latestPM25) + ") > " + String(thresholdPM25);
             logEvent("system_auto", "spray_on", reason);
             Serial.println(reason);
             sendSystemStatus();

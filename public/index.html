@@ -201,11 +201,23 @@
                         <div class="num-card"><span class="num-title">PM10</span><span class="num-val" id="pm10-num">4</span></div>
                     </div>
 
-                    <!-- Miscellaneous metrics -->
+                    <!-- Miscellaneous metrics & AI Diagnostics -->
                     <div class="misc-metrics-container">
                         <div class="misc-card">
                             <span class="misc-title" data-i18n="typical_particle_size">Typical Particle Size</span>
                             <span class="misc-value"><span id="typical-size">0.42</span> <span class="unit">µm</span></span>
+                        </div>
+                        <div class="misc-card">
+                            <span class="misc-title" data-i18n="ai_classification">AI Classification</span>
+                            <span class="misc-value" id="ai-classification-text" style="font-size: 0.95rem; color: #00e5ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; max-width: 100%;">Analyzing...</span>
+                        </div>
+                        <div class="misc-card">
+                            <span class="misc-title" data-i18n="ai_confidence">AI Confidence</span>
+                            <span class="misc-value"><span id="ai-confidence-val">--</span> <span class="unit">%</span></span>
+                        </div>
+                        <div class="misc-card">
+                            <span class="misc-title" data-i18n="ai_anomaly_score">Anomaly Score</span>
+                            <span class="misc-value" id="ai-anomaly-val" style="color: #ff3d00;">--</span>
                         </div>
                     </div>
 
@@ -243,6 +255,16 @@
                         </div>
                         <input type="range" class="range-slider" id="pm25-threshold" min="5" max="150" value="35">
                         <span class="range-hint" data-i18n="pm25_threshold_hint">Relay switches ON when PM2.5 exceeds this value.</span>
+                    </div>
+
+                    <!-- PM1.0 SAFETY THRESHOLD SLIDER -->
+                    <div class="settings-group">
+                        <div class="settings-label-row">
+                            <label for="pm1-threshold" data-i18n="label_pm1_threshold">PM1.0 Safety Threshold</label>
+                            <span class="settings-val-badge"><span id="threshold-pm1-val">15</span> µg/m³</span>
+                        </div>
+                        <input type="range" class="range-slider" id="pm1-threshold" min="2" max="50" value="15">
+                        <span class="range-hint" data-i18n="pm1_threshold_hint">Relay automatically switches ON for safety when PM1.0 exceeds this value.</span>
                     </div>
 
                     <!-- DURATION SLIDER -->
@@ -292,6 +314,7 @@
                         <span class="legend-item"><span class="legend-color pm25-color"></span>PM2.5</span>
                         <span class="legend-item"><span class="legend-color pm10-color"></span>PM10</span>
                         <span class="legend-item"><span class="legend-color spray-color"></span><span data-i18n="spray_legend">Water Spray</span></span>
+                        <span class="legend-item"><span class="legend-color anomaly-color"></span><span data-i18n="ai_anomaly_score">Anomaly Score</span></span>
                     </div>
                 </div>
 
