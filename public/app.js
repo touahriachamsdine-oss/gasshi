@@ -403,7 +403,7 @@ void sendSystemStatus() {
     float nc0p5 = 0.0, nc1p0 = 0.0, nc2p5 = 0.0, nc4p0 = 0.0, nc10p0 = 0.0;
     float typicalParticleSize = 0.0;
 
-    error = sensor.readMeasurementValues(
+    error = sensor.readMeasurementValuesFloat(
       mc1p0, mc2p5, mc4p0, mc10p0,
       nc0p5, nc1p0, nc2p5, nc4p0,
       nc10p0, typicalParticleSize
@@ -420,7 +420,7 @@ void sendSystemStatus() {
       numPM10 = nc10p0;
       typSize = typicalParticleSize;
     } else {
-      Serial.print("readMeasurementValues failed: ");
+      Serial.print("readMeasurementValuesFloat failed: ");
       errorToString(error, errorMessage, sizeof errorMessage);
       Serial.println(errorMessage);
     }
